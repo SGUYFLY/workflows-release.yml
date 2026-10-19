@@ -1,0 +1,13 @@
+# รันบนเครื่องตัวเองหรือเซิร์ฟเวอร์:  docker compose up -d   แล้วเปิด http://localhost:8080
+services:
+  thai-structure:
+    build: .
+    ports: ["8080:8080"]
+    volumes: ["thai-data:/data"]
+    restart: unless-stopped
+    # ถ้าจะใช้ Supabase/Postgres ภายนอก ให้เพิ่ม:
+    # environment:
+    #   DATABASE_URL: postgresql://...
+    #   JWT_SECRET: ข้อความสุ่มยาวๆ
+volumes:
+  thai-data:

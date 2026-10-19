@@ -1,0 +1,16 @@
+# Deploy บน Render.com: New > Blueprint > เลือก repo นี้
+# หมายเหตุ: ฐานข้อมูลฝังตัวต้องมี Disk (แผนที่เสียเงิน) ไม่เช่นนั้นข้อมูลจะหายเมื่อเซิร์ฟเวอร์รีสตาร์ต
+# ถ้าใช้แผนฟรี ให้ใส่ DATABASE_URL ของ Supabase แทน (และลบส่วน disk ออก)
+services:
+  - type: web
+    name: thai-structure
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: TRUST_PROXY
+        value: "1"

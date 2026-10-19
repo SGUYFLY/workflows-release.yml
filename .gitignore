@@ -1,0 +1,8 @@
+node_modules/
+.env
+backend/data/
+data/
+frontend/dist/
+desktop/backend/
+desktop/release/
+*.log

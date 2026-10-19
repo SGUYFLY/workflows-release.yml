@@ -1,0 +1,77 @@
+{
+  "name": "thai-structure-desktop",
+  "productName": "ThaiStructure",
+  "version": "1.0.0",
+  "description": "ไทยโครงสร้าง — ระบบจัดการรับเหมาก่อสร้าง (แอปเดสก์ท็อป)",
+  "author": "ไทยโครงสร้าง",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "prepare-app": "node ../scripts/prepare-desktop.js",
+    "start": "npm run prepare-app && electron .",
+    "dist": "npm run prepare-app && electron-builder --win --x64",
+    "dist:dir": "npm run prepare-app && electron-builder --win --x64 --dir"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.0",
+    "bcryptjs": "^3.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "th.thaistructure.app",
+    "productName": "ThaiStructure",
+    "asar": false,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json",
+      "backend/**/*",
+      "build/icon.png",
+      "!**/.env",
+      "!**/data/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ไทยโครงสร้าง",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "ThaiStructure-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "ThaiStructure-Portable-${version}.${ext}"
+    },
+    "publish": null
+  }
+}
