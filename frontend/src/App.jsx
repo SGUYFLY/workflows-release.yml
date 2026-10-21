@@ -753,7 +753,7 @@ function StaffAppInner({ auth, onLogout, server, demo }) {
           background: linear-gradient(var(--paper), var(--paper)),
             repeating-linear-gradient(0deg, rgba(28,43,51,0.05) 0, rgba(28,43,51,0.05) 1px, transparent 1px, transparent 40px),
             repeating-linear-gradient(90deg, rgba(28,43,51,0.05) 0, rgba(28,43,51,0.05) 1px, transparent 1px, transparent 40px);
-          min-height: 100%; display: flex; font-size: 14px;
+          min-height: 100vh; display: flex; font-size: 14px;
         }
         .app-root h1, .app-root h2, .app-root h3, .app-root .display { font-family: 'Bai Jamjuree', sans-serif; }
         .mono { font-family: 'JetBrains Mono', monospace; }
@@ -1427,8 +1427,13 @@ function VendorsView({ role, vendors, onAdd }) {
     if (!navigator.geolocation) { setLocationError("เบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง"); setLocating(false); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => { setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocating(false); },
-      () => { setLocationError("ไม่สามารถเข้าถึงตำแหน่งได้ กรุณาอนุญาตการเข้าถึงตำแหน่งบนเบราว์เซอร์"); setLocating(false); },
-      { timeout: 8000 }
+      (err) => {
+        setLocationError(err && err.code === 1
+          ? "ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง กรุณาอนุญาตในเบราว์เซอร์ หรือเปิดสิทธิ์ตำแหน่งของแอปในการตั้งค่าเครื่อง"
+          : "หาตำแหน่งของเครื่องไม่ได้ กรุณาเปิดบริการระบุตำแหน่งของเครื่อง (Windows: การตั้งค่า > ความเป็นส่วนตัว > ตำแหน่ง) แล้วลองใหม่");
+        setLocating(false);
+      },
+      { timeout: 15000, enableHighAccuracy: false, maximumAge: 60000 }
     );
   };
 
@@ -1907,7 +1912,7 @@ function Landing({ onChoose, demo }) {
     <div className="landing-root">
       <style>{`
         .landing-root {
-          min-height: 100%; display: flex; align-items: center; justify-content: center;
+          min-height: 100vh; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
           font-family: 'Sarabun', sans-serif; padding: 32px;
           background: #1C2B33;
           background-image:

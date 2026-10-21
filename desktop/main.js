@@ -1,5 +1,5 @@
 // main.js — แอปเดสก์ท็อป "ไทยโครงสร้าง": เปิดเซิร์ฟเวอร์ในเครื่อง (ฐานข้อมูล PGlite ฝังตัว) แล้วแสดงหน้าเว็บในหน้าต่างแอป
-const { app, BrowserWindow, Menu, shell, dialog } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -68,6 +68,11 @@ function createWindow() {
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, preload: path.join(__dirname, 'preload.js') },
   });
   const origin = `http://127.0.0.1:${backend.port}`;
+  // อนุญาตเฉพาะสิทธิ์ที่แอปต้องใช้ (ตำแหน่งสำหรับค้นหาร้านใกล้เคียง) และเฉพาะหน้าของแอปเอง
+  const allowed = new Set(['geolocation']);
+  const fromApp = (wc, url) => { try { return new URL(url || wc.getURL()).origin === origin; } catch { return false; } };
+  session.defaultSession.setPermissionRequestHandler((wc, permission, cb, details) => cb(allowed.has(permission) && fromApp(wc, details && details.requestingUrl)));
+  session.defaultSession.setPermissionCheckHandler((wc, permission, requestingOrigin) => allowed.has(permission) && fromApp(wc, requestingOrigin));
   win.loadURL(origin);
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) shell.openExternal(url); return { action: 'deny' }; });
   win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith(origin)) { e.preventDefault(); if (/^https?:/.test(url)) shell.openExternal(url); } });
