@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'" />
+  <title>เชื่อมต่อข้อมูลออนไลน์</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 18px 20px; font-family: 'Segoe UI', 'Sarabun', 'Tahoma', sans-serif; background: #F4F3EE; color: #1B2A36; font-size: 13.5px; }
+    h1 { font-size: 17px; margin: 0 0 6px; }
+    .intro { color: #4B5962; margin-bottom: 14px; line-height: 1.55; }
+    .field { margin-bottom: 12px; }
+    label { display: block; font-weight: 600; margin-bottom: 4px; }
+    input { width: 100%; padding: 8px 10px; border: 1px solid #B9B6AA; background: #fff; font: inherit; font-size: 13px; }
+    input:focus { outline: 2px solid #E8641C; outline-offset: -2px; }
+    .note { font-size: 12px; color: #6B7680; margin-top: 4px; line-height: 1.5; }
+    .msg { margin-top: 10px; padding: 10px 12px; font-size: 13px; border-left: 3px solid #8A97A0; background: #EEF1F2; white-space: pre-wrap; line-height: 1.5; }
+    .msg.ok { background: #E5F0E8; color: #2E5C40; border-color: #3F7D58; }
+    .msg.err { background: #FBE9E7; color: #8A1F15; border-color: #B3261E; }
+    .msg.warn { background: #FCF3D9; color: #7A5C0A; border-color: #D4A017; }
+    .mode { padding: 6px 10px; display: inline-block; background: #1B2A36; color: #fff; font-size: 12px; margin-bottom: 10px; }
+    .buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+    button { padding: 8px 16px; border: 1px solid #1B2A36; background: #fff; color: #1B2A36; cursor: pointer; font: inherit; font-size: 13px; }
+    button:hover { background: #EBEAE4; }
+    button.primary { background: #E8641C; color: #fff; border-color: #E8641C; }
+    button.primary:hover { background: #D55A18; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .warn-box { background: #FFFBEE; border: 1px solid #E5D4A1; padding: 10px 12px; font-size: 12px; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <div class="mode" id="mode">กำลังโหลด...</div>
+  <h1>เชื่อมต่อข้อมูลออนไลน์ (Supabase)</h1>
+  <p class="intro">กรอกค่าให้ตรงกับที่ตั้งไว้ใน Render เพื่อให้แอปเดสก์ท็อปและเว็บออนไลน์ใช้ข้อมูลและบัญชีผู้ใช้ชุดเดียวกัน</p>
+
+  <div class="warn-box">
+    <strong>ก่อนเชื่อม:</strong> ค่า DATABASE_URL จะถูกเก็บไว้ที่โฟลเดอร์ข้อมูลของแอปในเครื่องนี้เท่านั้น (ไม่ส่งขึ้นที่ไหน) โปรดระวังอย่าแชร์ไฟล์โฟลเดอร์นั้น
+  </div>
+
+  <div class="field">
+    <label for="dbUrl">DATABASE_URL (Transaction Pooler)</label>
+    <input id="dbUrl" type="text" placeholder="postgresql://postgres.xxx:รหัสผ่าน@aws-0-xxxx.pooler.supabase.com:6543/postgres" spellcheck="false" />
+    <div class="note">คัดลอกจาก Supabase → ปุ่ม Connect → Connection string → <strong>Transaction pooler</strong> แล้วแทน <code>[YOUR-PASSWORD]</code> ด้วยรหัสผ่านฐานข้อมูลจริง</div>
+  </div>
+
+  <div class="field">
+    <label for="jwtSecret">JWT_SECRET</label>
+    <input id="jwtSecret" type="text" placeholder="สตริงสุ่มยาวอย่างน้อย 32 ตัวอักษร" spellcheck="false" />
+    <div class="note">ต้องตรงกับค่าใน Render → Environment → <code>JWT_SECRET</code> เป๊ะ ๆ เพื่อให้ล็อกอินของทั้งสองฝั่งใช้ร่วมกันได้</div>
+  </div>
+
+  <div id="msg" class="msg" style="display:none"></div>
+
+  <div class="buttons">
+    <button type="button" onclick="window.cloud.cancel()">ยกเลิก</button>
+    <button type="button" id="btnTest" onclick="doTest()">ทดสอบการเชื่อมต่อ</button>
+    <button type="button" id="btnSchema" onclick="doSchema()" style="display:none">สร้างตารางฐานข้อมูล</button>
+    <button type="button" class="primary" id="btnSave" onclick="doSave()">บันทึกและรีสตาร์ตแอป</button>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const setMsg = (text, cls) => { const el = $('msg'); el.textContent = text; el.className = 'msg ' + (cls || ''); el.style.display = text ? 'block' : 'none'; };
+const vals = () => ({ databaseUrl: $('dbUrl').value.trim(), jwtSecret: $('jwtSecret').value.trim() });
+
+async function init() {
+  const cur = await window.cloud.current();
+  $('mode').textContent = 'โหมดปัจจุบัน: ' + (cur.mode === 'cloud' ? 'ออนไลน์ (Supabase)' : 'ในเครื่อง (ออฟไลน์)');
+  if (cur.databaseUrl) $('dbUrl').value = cur.databaseUrl;
+  if (cur.jwtSecret) $('jwtSecret').value = cur.jwtSecret;
+}
+init();
+
+async function doTest() {
+  const v = vals();
+  if (!v.databaseUrl) return setMsg('กรุณากรอก DATABASE_URL', 'err');
+  $('btnTest').disabled = true; $('btnSave').disabled = true;
+  setMsg('กำลังทดสอบการเชื่อมต่อ... (ไม่เกิน 15 วินาที)');
+  try {
+    const r = await window.cloud.test(v);
+    if (!r.ok) { setMsg('เชื่อมต่อไม่สำเร็จ: ' + r.error + '\n\nตรวจว่า DATABASE_URL เป็นแบบ Transaction pooler และรหัสผ่านถูกต้อง', 'err'); $('btnSchema').style.display = 'none'; return; }
+    if (!r.hasUsers) { setMsg('เชื่อมต่อฐานข้อมูลได้ แต่ยังไม่มีตารางที่จำเป็น (ตารางทั้งหมด ' + r.tables + ') กด "สร้างตารางฐานข้อมูล" เพื่อสร้างให้อัตโนมัติ', 'warn'); $('btnSchema').style.display = 'inline-block'; return; }
+    setMsg('เชื่อมต่อสำเร็จ: พบ ' + r.tables + ' ตาราง, ' + r.users + ' บัญชีผู้ใช้, ' + r.projects + ' โครงการ', 'ok');
+    $('btnSchema').style.display = 'none';
+  } catch (e) { setMsg('ผิดพลาด: ' + (e.message || e), 'err'); }
+  finally { $('btnTest').disabled = false; $('btnSave').disabled = false; }
+}
+
+async function doSchema() {
+  const v = vals(); if (!v.databaseUrl) return setMsg('กรุณากรอก DATABASE_URL', 'err');
+  $('btnSchema').disabled = true; setMsg('กำลังสร้างตาราง...');
+  try {
+    const r = await window.cloud.setupSchema(v);
+    if (!r.ok) { setMsg('สร้างตารางไม่สำเร็จ: ' + r.error, 'err'); return; }
+    setMsg('สร้างตารางเรียบร้อย — กด "ทดสอบการเชื่อมต่อ" อีกครั้งเพื่อยืนยัน', 'ok');
+    $('btnSchema').style.display = 'none';
+  } catch (e) { setMsg('ผิดพลาด: ' + (e.message || e), 'err'); }
+  finally { $('btnSchema').disabled = false; }
+}
+
+async function doSave() {
+  const v = vals();
+  if (!v.databaseUrl) return setMsg('กรุณากรอก DATABASE_URL', 'err');
+  if (v.jwtSecret.length < 16) return setMsg('JWT_SECRET ต้องยาวอย่างน้อย 16 ตัวอักษร', 'err');
+  $('btnSave').disabled = true; $('btnTest').disabled = true;
+  setMsg('ทดสอบและบันทึก...');
+  try {
+    const t = await window.cloud.test(v);
+    if (!t.ok) { setMsg('เชื่อมต่อไม่สำเร็จ จึงยังไม่บันทึก: ' + t.error, 'err'); return; }
+    if (!t.hasUsers) { setMsg('ยังไม่มีตารางที่จำเป็น กด "สร้างตารางฐานข้อมูล" ก่อนบันทึก', 'warn'); $('btnSchema').style.display = 'inline-block'; return; }
+    const r = await window.cloud.save(v);
+    if (!r.ok) { setMsg('บันทึกไม่สำเร็จ: ' + r.error, 'err'); return; }
+    setMsg('บันทึกแล้ว กำลังรีสตาร์ตแอป...', 'ok');
+  } catch (e) { setMsg('ผิดพลาด: ' + (e.message || e), 'err'); }
+  finally { $('btnSave').disabled = false; $('btnTest').disabled = false; }
+}
+</script>
+</body>
+</html>

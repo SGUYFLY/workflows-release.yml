@@ -31,3 +31,4 @@
 - พอร์ทัลลูกค้ายังเป็นหน้าตัวอย่าง (แสดงเฉพาะโหมดสาธิตที่มีบัญชี @thai.local)
 - แพ็กเกจแจกจ่าย: `desktop/` (Electron), `Dockerfile`, `render.yaml`, `.github/workflows/release.yml`
 - ผู้ช่วยในแอป (ปุ่มกลมมุมขวาล่าง): `frontend/src/Assistant.jsx` + ฐานความรู้ `assistantKb.js` (เพิ่มหัวข้อได้) · backend `routes/assistant.js` (`/api/assistant/health|report|errors|fix`, ตาราง `error_log` สร้างอัตโนมัติ) · ปุ่มเดียวตรวจระบบ+สำรองอัตโนมัติ+ดาวน์โหลดรายงานให้ส่งต่อผู้พัฒนา · ไม่ใช้ AI ภายนอก
+- โหมดเชื่อมต่อออนไลน์ (เดสก์ท็อป): เมนู ไฟล์ → "เชื่อมต่อข้อมูลออนไลน์..." เปิดหน้าต่าง `desktop/cloud-settings.html` (preload `cloud-preload.js`) ให้กรอก DATABASE_URL + JWT_SECRET บันทึกใน `userData/config.json` แล้วรีสตาร์ตแอปใช้ Supabase แทน PGlite · IPC handlers ใน `desktop/main.js`: `cloud:current|test|setup-schema|save|cancel` · การตั้งค่าตำแหน่งเองในหน้าร้านค้าใช้ localStorage key `thai_myloc`

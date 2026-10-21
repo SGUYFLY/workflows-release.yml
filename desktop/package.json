@@ -36,6 +36,8 @@
     "files": [
       "main.js",
       "preload.js",
+      "cloud-preload.js",
+      "cloud-settings.html",
       "package.json",
       "backend/**/*",
       "build/icon.png",
