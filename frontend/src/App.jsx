@@ -121,6 +121,16 @@ const initialVendors = [
 
 // ตำแหน่งสำนักงานบริษัท ใช้เป็นจุดอ้างอิงสำรองเมื่อผู้ใช้ไม่อนุญาตการเข้าถึงตำแหน่ง
 const COMPANY_LOCATION = { lat: 13.7563, lng: 100.5018 };
+// รับพิกัดที่คัดลอกจาก Google Maps เช่น "7.8881, 98.3512" (คลิกขวาที่จุดบนแผนที่ แล้วกดตัวเลขพิกัดเพื่อคัดลอก)
+const parseLatLng = (str) => {
+  const m = String(str || "").trim().match(/^(-?\d{1,3}(?:\.\d+)?)\s*[,\s]\s*(-?\d{1,3}(?:\.\d+)?)$/);
+  if (!m) return null;
+  const lat = Number(m[1]), lng = Number(m[2]);
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 ? { lat, lng } : null;
+};
+const MYLOC_KEY = "thai_myloc";
+const loadMyLoc = () => { try { const v = JSON.parse(localStorage.getItem(MYLOC_KEY)); return v && typeof v.lat === "number" ? v : null; } catch { return null; } };
+const saveMyLoc = (v) => { try { v ? localStorage.setItem(MYLOC_KEY, JSON.stringify(v)) : localStorage.removeItem(MYLOC_KEY); } catch {} };
 
 function haversineKm(a, b) {
   const R = 6371;
@@ -1418,7 +1428,9 @@ function TeamView({ role, team, subcontractors, projects, onAdd, onAddSubcontrac
 /* ------------------------------ VENDORS VIEW ----------------------------- */
 
 function VendorsView({ role, vendors, onAdd }) {
-  const [userLocation, setUserLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(loadMyLoc);
+  const [manualText, setManualText] = useState("");
+  const [manualSaved, setManualSaved] = useState(() => !!loadMyLoc());
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState(null);
   const [typeFilter, setTypeFilter] = useState("ทั้งหมด");
@@ -1428,11 +1440,11 @@ function VendorsView({ role, vendors, onAdd }) {
     setLocating(true); setLocationError(null);
     if (!navigator.geolocation) { setLocationError("เบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง"); setLocating(false); return; }
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocating(false); },
+      (pos) => { setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setManualSaved(false); setLocating(false); },
       (err) => {
         setLocationError(err && err.code === 1
           ? "ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง กรุณาอนุญาตในเบราว์เซอร์ หรือเปิดสิทธิ์ตำแหน่งของแอปในการตั้งค่าเครื่อง"
-          : "หาตำแหน่งของเครื่องไม่ได้ กรุณาเปิดบริการระบุตำแหน่งของเครื่อง (Windows: การตั้งค่า > ความเป็นส่วนตัว > ตำแหน่ง) แล้วลองใหม่");
+          : "หาตำแหน่งของเครื่องไม่ได้ — ตั้งตำแหน่งของคุณเองได้ที่ช่อง \"ตั้งตำแหน่งเอง\" ด้านล่าง (วางพิกัดจาก Google Maps)");
         setLocating(false);
       },
       { timeout: 15000, enableHighAccuracy: false, maximumAge: 60000 }
@@ -1450,8 +1462,22 @@ function VendorsView({ role, vendors, onAdd }) {
     <>
       <div className="field-mode-note">
         {userLocation
-          ? "เรียงตามระยะทางจากตำแหน่งปัจจุบันของคุณ"
+          ? (manualSaved ? "เรียงตามระยะทางจากตำแหน่งที่คุณตั้งไว้เอง" : "เรียงตามระยะทางจากตำแหน่งปัจจุบันของคุณ")
           : "ยังไม่ได้เปิดตำแหน่งของคุณ — เรียงตามระยะทางจากสำนักงานบริษัทชั่วคราว"}
+      </div>
+      <div className="alert-row" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", background: "#fff", border: "1px dashed #B9B6AA" }}>
+        <span style={{ fontSize: 13 }}><strong>ตั้งตำแหน่งเอง</strong> (ใช้เมื่อเครื่องหาตำแหน่งไม่ได้):</span>
+        <input
+          value={manualText} onChange={(e) => setManualText(e.target.value)} placeholder="วางพิกัด เช่น 7.8881, 98.3512"
+          style={{ flex: "1 1 220px", minWidth: 180, padding: "6px 8px", border: "1px solid #B9B6AA", font: "inherit", fontSize: 13 }}
+        />
+        <button className="btn ghost" onClick={() => {
+          const v = parseLatLng(manualText);
+          if (!v) { setLocationError("พิกัดไม่ถูกต้อง ให้คัดลอกตัวเลขพิกัดจาก Google Maps เช่น 7.8881, 98.3512"); return; }
+          saveMyLoc(v); setUserLocation(v); setManualSaved(true); setLocationError(null); setManualText("");
+        }}>ใช้พิกัดนี้</button>
+        {manualSaved && <button className="btn ghost" onClick={() => { saveMyLoc(null); setUserLocation(null); setManualSaved(false); }}>ล้างตำแหน่งที่ตั้งไว้</button>}
+        <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" style={{ fontSize: 12.5 }}>เปิด Google Maps เพื่อคัดลอกพิกัด</a>
       </div>
       <div className="toolbar">
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -1577,6 +1603,8 @@ function SubcontractorForm({ projects, onSubmit, onClose }) {
 
 function VendorForm({ onSubmit, onClose }) {
   const [f, setF] = useState({ name: "", type: VENDOR_TYPES[0], category: VENDOR_CATEGORIES[0], address: "", phone: "", openTime: "08:00", closeTime: "18:00", days: "ทุกวัน" });
+  const [coord, setCoord] = useState("");
+  const coordBad = coord.trim() !== "" && !parseLatLng(coord);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   return (
     <Modal title="เพิ่มร้านค้า / ร้านซ่อม" onClose={onClose}>
@@ -1592,11 +1620,17 @@ function VendorForm({ onSubmit, onClose }) {
         <div className="field"><label>เวลาปิด</label><input type="time" value={f.closeTime} onChange={set("closeTime")} /></div>
       </div>
       <div className="field"><label>วันที่เปิดทำการ</label><input value={f.days} onChange={set("days")} placeholder="เช่น ทุกวัน, จันทร์–เสาร์" /></div>
-      <p style={{ fontSize: 11.5, color: "#6B7680", marginTop: -4 }}>* ต้นแบบนี้ยังไม่มีระบบระบุพิกัดร้านอัตโนมัติ ระยะทางของร้านที่เพิ่มใหม่จะคำนวณจากตำแหน่งสำนักงานชั่วคราวจนกว่าจะเชื่อมต่อบริการแผนที่จริง</p>
+      <div className="field">
+        <label>พิกัดร้าน (ไม่บังคับ)</label>
+        <input value={coord} onChange={(e) => setCoord(e.target.value)} placeholder="วางพิกัดจาก Google Maps เช่น 7.8881, 98.3512" />
+      </div>
+      <p style={{ fontSize: 11.5, color: coordBad ? "#B3261E" : "#6B7680", marginTop: -4 }}>
+        {coordBad ? "รูปแบบพิกัดไม่ถูกต้อง ต้องเป็น ละติจูด, ลองจิจูด" : "* ถ้าไม่ใส่พิกัด ระยะทางของร้านจะคำนวณจากตำแหน่งสำนักงานชั่วคราว วิธีหาพิกัด: เปิด Google Maps คลิกขวาที่ร้าน แล้วคลิกตัวเลขพิกัดด้านบนสุดเพื่อคัดลอก"}
+      </p>
       <button
         className="btn accent" style={{ width: "100%", justifyContent: "center", marginTop: 6 }}
-        disabled={!f.name || !f.address}
-        onClick={() => onSubmit({ ...f, lat: COMPANY_LOCATION.lat, lng: COMPANY_LOCATION.lng })}
+        disabled={!f.name || !f.address || coordBad}
+        onClick={() => { const c = parseLatLng(coord) || COMPANY_LOCATION; onSubmit({ ...f, lat: c.lat, lng: c.lng }); }}
       >
         บันทึกร้านค้า
       </button>

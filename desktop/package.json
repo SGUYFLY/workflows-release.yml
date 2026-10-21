@@ -1,7 +1,7 @@
 {
   "name": "thai-structure-desktop",
   "productName": "ThaiStructure",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "ไทยโครงสร้าง — ระบบจัดการรับเหมาก่อสร้าง (แอปเดสก์ท็อป)",
   "author": "ไทยโครงสร้าง",
   "main": "main.js",
