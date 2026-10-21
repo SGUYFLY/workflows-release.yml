@@ -8,6 +8,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
+import Assistant from "./Assistant.jsx";
 
 /* ---------------------------------- API ----------------------------------- */
 
@@ -891,6 +892,7 @@ function StaffAppInner({ auth, onLogout, server, demo }) {
         <div className="nav-footer">เข้าสู่ระบบในฐานะ<br /><strong style={{ color: "#E8E6DF" }}>{ROLES.find((r) => r.id === role).label}</strong></div>
       </aside>
       {showUsers && <UsersModal token={token} me={auth.user} onClose={() => setShowUsers(false)} />}
+      <Assistant token={token} role={role} tab={tab} />
 
       <main className="main">
         <div className="title-block">

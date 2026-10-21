@@ -26,6 +26,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/state', require('./routes/state'));
+app.use('/api/assistant', require('./routes/assistant'));
 app.use('/api', (req, res) => res.status(404).json({ error: 'ไม่พบ API นี้' }));
 
 // หน้าเว็บ (frontend build) — ใช้ได้ทั้งเว็บออนไลน์และแอปเดสก์ท็อป

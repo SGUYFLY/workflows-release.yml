@@ -30,3 +30,4 @@
 - ฐานข้อมูล: ไม่มี `DATABASE_URL` = PGlite ฝังตัว (`DATA_DIR`) · มี = Postgres/Supabase
 - พอร์ทัลลูกค้ายังเป็นหน้าตัวอย่าง (แสดงเฉพาะโหมดสาธิตที่มีบัญชี @thai.local)
 - แพ็กเกจแจกจ่าย: `desktop/` (Electron), `Dockerfile`, `render.yaml`, `.github/workflows/release.yml`
+- ผู้ช่วยในแอป (ปุ่มกลมมุมขวาล่าง): `frontend/src/Assistant.jsx` + ฐานความรู้ `assistantKb.js` (เพิ่มหัวข้อได้) · backend `routes/assistant.js` (`/api/assistant/health|report|errors|fix`, ตาราง `error_log` สร้างอัตโนมัติ) · ปุ่มเดียวตรวจระบบ+สำรองอัตโนมัติ+ดาวน์โหลดรายงานให้ส่งต่อผู้พัฒนา · ไม่ใช้ AI ภายนอก
